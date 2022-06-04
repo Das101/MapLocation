@@ -8,8 +8,11 @@ import androidx.core.app.ActivityCompat;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Dialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
@@ -26,8 +29,10 @@ import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnSuccessListener;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -121,6 +126,26 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    public String getAddress(Context ctx, double lat, double lng){
+        String fullAdd=null;
+        try{
+            Geocoder geocoder= new Geocoder(ctx, Locale.getDefault());
+            List<android.location.Address> addresses = geocoder.getFromLocation(lat,lng,1);
+            if(addresses.size()>0){
+                Address address = addresses.get(0);
+                fullAdd = address.getAddressLine(0);
+                // if you want only city or pin code use following code //
+            /* String Location = address.getLocality();
+            String zip = address.getPostalCode();
+            String Country = address.getCountryName(); */
+            }
+
+        }catch(IOException ex){
+            ex.printStackTrace();
+        }
+        return fullAdd;
+    }
+
     private void findLocation() {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
                 ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -131,7 +156,8 @@ public class MainActivity extends AppCompatActivity {
                 public void onSuccess(Location location) {
                     if (location != null) {
                         // here
-                        location_tv.setText(String.format("Lat: %s, Lng: %s altitude: %s accuracy: %s", location.getLatitude(), location.getLongitude(), location.getAltitude(), location.getAccuracy()));
+                        String address = getAddress(MainActivity.this, location.getLatitude(), location.getLongitude());
+                        location_tv.setText(String.format("Lat: %s, Lng: %s altitude: %s accuracy: %s, address: %s", location.getLatitude(), location.getLongitude(), location.getAltitude(), location.getAccuracy(), address));
                     }
                 }
             });
@@ -157,7 +183,11 @@ public class MainActivity extends AppCompatActivity {
                 if (locationResult != null) {
                     Location location = locationResult.getLastLocation();
                     // here
-                    location_tv.setText(String.format("Lat: %s, Lng: %s altitude: %s  accuracy:%s", location.getLatitude(), location.getLongitude(),location.getAltitude(), location.getAccuracy()));
+
+                    String address = getAddress(MainActivity.this, location.getLatitude(), location.getLongitude());
+                    location_tv.setText(String.format("Lat: %s, Lng: %s altitude: %s accuracy: %s, address: %s", location.getLatitude(), location.getLongitude(), location.getAltitude(), location.getAccuracy(), address));
+
+
                 }
             }
         };
